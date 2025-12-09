@@ -1,0 +1,3 @@
+/home/ppha/raytracing_in_c/build/CMakeFiles/raytracing.dir
+/home/ppha/raytracing_in_c/build/CMakeFiles/edit_cache.dir
+/home/ppha/raytracing_in_c/build/CMakeFiles/rebuild_cache.dir
