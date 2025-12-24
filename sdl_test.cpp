@@ -1,10 +1,14 @@
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <cmath>
 
 
 #define WHITE_COLOR 0xffffffff 
 #define BLACK_COLOR 0x00000000
+
+const int WIDTH = 1920;
+const int HEIGHT = 1200;
 
 
 struct Circle
@@ -14,43 +18,16 @@ struct Circle
     float radius;
     Uint32 color;
 
-    /* Circle(float X_, float Y_, float radius_){
-        this->x = X_;
-        this->y = Y_;
-        this->radius = radius_;
-    }*/
-
     Circle(float X_, float Y_, float radius_, Uint32  color_)
         : x(X_), y(Y_), radius(radius_), color(color_){}
 
 };
 
-
-// void drawCircle(SDL_Surface *surface, Circle& circle ){
-    
-//     double radius_squared = (circle.radius) * (circle.radius);
-
-//     for(int x = circle.x - circle.radius; x <= circle.x+circle.radius; x++){
-//         for(double y = circle.y - circle.radius; y <= circle.y+circle.radius; y++){
-
-//             double distance_squared = (x-circle.x)*(x-circle.x) + (y-circle.y) * (y-circle.y);
-//             if( distance_squared < radius_squared){
-
-//                 SDL_Rect pixel = {x,y,1,1};
-//                 SDL_FillRect(surface, &pixel, circle.color);
-
-//             }
-
-//         } 
-
-//     }
-// }
-
 static inline void putPixel(SDL_Surface* s, int x, int y, Uint32 color) {
     if ((unsigned)x >= (unsigned)s->w || (unsigned)y >= (unsigned)s->h) return;
     Uint32* pixels = (Uint32*)s->pixels;
-    int pitchPixels = s->pitch / 4;           // 4 bytes per pixel (ARGB8888/RGBA8888)
-    pixels[y * pitchPixels + x] = color;      // 2D -> 1D
+    int pitchPixels = s->pitch / 4;          
+    pixels[y * pitchPixels + x] = color;      
 }
 
 
@@ -72,35 +49,104 @@ void drawFilledCircle(SDL_Surface* s, int cx, int cy, int r, Uint32 color) {
     if (SDL_MUSTLOCK(s)) SDL_UnlockSurface(s);
 }
 
+static void blitText(SDL_Surface* dst, TTF_Font* font,
+                     const char* text, int x, int y)
+{
+    SDL_Color white = {255, 255, 255, 255};
 
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, text, white);
+    if (!textSurface) return;
+
+    SDL_Rect pos = { x, y, textSurface->w, textSurface->h };
+    SDL_BlitSurface(textSurface, nullptr, dst, &pos);
+
+    SDL_FreeSurface(textSurface);
+}
 
 int main(){
    
+
+    //SDL_Init Window and Surface
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* win = SDL_CreateWindow("Window",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,640,480,SDL_WINDOW_SHOWN);
+    SDL_Window* win = SDL_CreateWindow("Window",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WIDTH,HEIGHT,SDL_WINDOW_SHOWN);
     SDL_Surface* winSurface = SDL_GetWindowSurface(win);
     
+    //SDL_ttf Init
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("Font.ttf",26);
+    if(!font){
+        printf("TTF Error: %s\n", TTF_GetError());
+    };
+
 
     SDL_FillRect(winSurface, NULL, BLACK_COLOR);
     
     Circle circle(200, 200, 80, WHITE_COLOR);
 
+    Uint64 last_counter = SDL_GetPerformanceCounter();
+    Uint64 frequency = SDL_GetPerformanceFrequency();
+
+    int frames = 0;
+    double fps_timer = 0.0;
+    double fps_display = 0.0;
+
     int app_is_running = 1;
     while (app_is_running){
         SDL_Event event;
 
+        Uint64 current_counter = SDL_GetPerformanceCounter();
+        // printf("Current_counter: %ld \n",current_counter);
+        // printf("Frequency: %ld \n",frequency);
+        
+        double delta_time =
+            (double)(current_counter - last_counter) / frequency;
+        last_counter = current_counter;
+
+        fps_timer += delta_time;
+        frames++;
+
+
+        if(fps_timer >= 1.0) {
+
+            fps_display = frames / fps_timer;
+            printf("FPS: %.2f\n", fps_display);
+            frames = 0;
+            fps_timer = 0.0;
+        }
+
         while(SDL_PollEvent(&event)){
+
+            // printf("event type = %d\n", event.type);
+            
             if(event.type == SDL_QUIT){
                 app_is_running = 0;
             }
+           
+            if(event.type == SDL_MOUSEMOTION){
+
+                // printf("x: %d y: %d \n",event.motion.x ,event.motion.y);
+                circle.x = event.motion.x;
+                circle.y = event.motion.y;
+            }
 
         }
+
+        SDL_FillRect(winSurface, NULL, BLACK_COLOR);
         drawFilledCircle(winSurface, (int)circle.x, (int)circle.y, (int)circle.radius, WHITE_COLOR);
+        
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "FPS: %.1f", fps_display);
+        blitText(winSurface, font, buf, 10, 10);
+
         SDL_UpdateWindowSurface(win);
+  
+  
     }
 
-    SDL_Quit();
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_DestroyWindow(win);
+    SDL_Quit();
     
     return 0;
 }
