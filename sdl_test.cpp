@@ -92,8 +92,6 @@ int main(){
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){
                 app_is_running = 0;
-                SDL_Quit();
-                SDL_DestroyWindow(win);
             }
 
         }
@@ -101,4 +99,8 @@ int main(){
         SDL_UpdateWindowSurface(win);
     }
 
+    SDL_Quit();
+    SDL_DestroyWindow(win);
+    
+    return 0;
 }
