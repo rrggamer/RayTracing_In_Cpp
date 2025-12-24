@@ -6,6 +6,7 @@
 
 #define WHITE_COLOR 0xffffffff 
 #define BLACK_COLOR 0x00000000
+#define YELLOW_COLOR 0xFFFF00
 
 const int WIDTH = 1920;
 const int HEIGHT = 1200;
@@ -82,6 +83,7 @@ int main(){
     SDL_FillRect(winSurface, NULL, BLACK_COLOR);
     
     Circle circle(200, 200, 80, WHITE_COLOR);
+    Circle circle2(200,200,100,YELLOW_COLOR);
 
     Uint64 last_counter = SDL_GetPerformanceCounter();
     Uint64 frequency = SDL_GetPerformanceFrequency();
@@ -129,10 +131,25 @@ int main(){
                 circle.y = event.motion.y;
             }
 
+            if(event.type == SDL_KEYDOWN){
+                if(event.key.keysym.sym == SDLK_w)
+                    circle2.y = circle2.y - 3;
+                
+                if(event.key.keysym.sym == SDLK_s)
+                    circle2.y =circle2.y + 3;
+            
+                if(event.key.keysym.sym == SDLK_a)
+                    circle2.x = circle2.x - 3;
+                
+                if(event.key.keysym.sym == SDLK_d)
+                    circle2.x =circle2.x + 3;
+            }
+
         }
 
         SDL_FillRect(winSurface, NULL, BLACK_COLOR);
-        drawFilledCircle(winSurface, (int)circle.x, (int)circle.y, (int)circle.radius, WHITE_COLOR);
+        drawFilledCircle(winSurface, static_cast<int>(circle2.x), static_cast<int>(circle2.y), static_cast<int>(circle2.radius), YELLOW_COLOR);
+        drawFilledCircle(winSurface, static_cast<int>(circle.x), static_cast<int>(circle.y), static_cast<int>(circle.radius), WHITE_COLOR);
         
         char buf[64];
         std::snprintf(buf, sizeof(buf), "FPS: %.1f", fps_display);
